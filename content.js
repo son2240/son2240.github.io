@@ -36,7 +36,35 @@ window.SITE = {
   },
 
   // 프로젝트 카드 — 아직 비워 둠. 형식은 README.md 의 "프로젝트 추가" 참고.
-  projects: [],
+  projects: [
+    {
+      featured: true,
+      kind: { ko: "AI 에이전트", en: "AI Agents" },
+      period: "2026",
+      title: { ko: "Slack 기반 AI 코딩 에이전트 협업 시스템", en: "Slack Orchestration for AI Coding Agents" },
+      summary: {
+        ko: "Claude Code·Codex 세션 여러 개가 Slack 하나로 협업하도록 직접 설계·운영한 환경에서 핵심 구조를 떼어 공개한 도구입니다.",
+        en: "Core mechanisms extracted from a multi-agent setup I designed and run, where many Claude Code and Codex sessions coordinate through one Slack workspace."
+      },
+      problem: {
+        ko: "에이전트끼리 서로 깨우며 끝없이 대화하면 한 번의 요청이 모델 호출 수십 번으로 불어나고, 채팅만으로는 작업 소유·검토 상태를 믿을 수 없습니다.",
+        en: "Agents that wake each other can turn one request into dozens of paid model turns, and chat history is not a reliable record of who owns or reviewed a task."
+      },
+      role: [
+        { ko: "'깊이 1' 규칙 설계: 사람 메시지 1건당 에이전트 간 전달은 최대 1단계 (+ 상한·긴급 정지·부재 정지·shadow 모드)", en: "Designed the depth-1 rule: one human message allows at most one agent-to-agent hop (plus caps, kill switch, absent pause, shadow mode)" },
+        { ko: "봇 하나로 에이전트별 이름·아이콘 게시, 감시기가 일이 있을 때만 세션을 깨우는 구조", en: "One bot posting as many personas; a watcher that wakes a session only when there is work" },
+        { ko: "Codex·Claude 공용 SQLite 작업 대장: 낙관적 동시성, 파일 범위 잠금, 해시 고정 보고서, 자기 검토 금지", en: "Shared SQLite task ledger: optimistic concurrency, file-scope locks, hash-pinned reports, no self-review" },
+        { ko: "구현은 Claude Code·Codex 에이전트에게 맡기고 설계·검토·운영을 지휘", en: "Directed AI coding agents for implementation while owning design, review and operation" }
+      ],
+      metrics: [
+        { value: "≤ 1 hop", label: { ko: "사람 요청당 에이전트 연쇄", en: "agent hops per human request" } },
+        { value: "36", label: { ko: "오프라인 테스트 (CI)", en: "offline tests (CI)" } },
+        { value: "0", label: { ko: "외부 의존성", en: "runtime dependencies" } }
+      ],
+      links: [{ href: "https://github.com/son2240/slack-agent-orchestration", label: { ko: "GitHub 코드", en: "Code on GitHub" } }],
+      tags: ["Claude Code", "Codex", "Multi-agent", "Slack API", "Python", "SQLite"]
+    }
+  ],
 
   // 기술 스택 묶음 (예: { group: { ko: "언어", en: "Languages" }, items: ["Python"] })
   skills: [],
