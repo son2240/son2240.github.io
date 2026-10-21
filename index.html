@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portfolio · son2240</title>
+  <meta name="description" content="son2240 포트폴리오 — 프로젝트, 기술 스택, 연락처">
+  <meta property="og:title" content="Portfolio · son2240">
+  <meta property="og:type" content="website">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%2316181d'/><text x='16' y='22' font-size='16' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='700'>S</text></svg>">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    // 첫 화면 깜빡임 방지: 저장된 테마·언어를 먼저 적용
+    try {
+      var t = localStorage.getItem("theme"); if (t) document.documentElement.dataset.theme = t;
+      var l = localStorage.getItem("lang"); if (l) document.documentElement.lang = l;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="#top" id="brand">son2240</a>
+      <nav class="nav" aria-label="섹션">
+        <a href="#about" data-i18n="nav_about">소개</a>
+        <a href="#projects" data-i18n="nav_projects">프로젝트</a>
+        <a href="#skills" data-i18n="nav_skills">기술</a>
+        <a href="#timeline" data-i18n="nav_timeline">이력</a>
+        <a href="#contact" data-i18n="nav_contact">연락</a>
+      </nav>
+      <div class="controls">
+        <button class="btn-icon" id="lang-btn" type="button" aria-label="Switch to English">EN</button>
+        <button class="btn-icon" id="theme-btn" type="button" aria-label="다크 모드 전환">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap">
+      <div class="hero" id="top">
+        <p class="eyebrow" id="eyebrow"></p>
+        <h1 id="headline"></h1>
+        <p class="lead" id="lead"></p>
+        <div class="cta" id="cta"></div>
+        <div class="highlights" id="highlights"></div>
+      </div>
+
+      <section id="about" aria-labelledby="about-h">
+        <h2 class="sec-title" id="about-h" data-i18n="nav_about">소개</h2>
+        <div class="about-grid">
+          <div id="about-text"></div>
+          <ul class="facts" id="facts"></ul>
+        </div>
+      </section>
+
+      <section id="projects" aria-labelledby="projects-h">
+        <h2 class="sec-title" id="projects-h" data-i18n="nav_projects">프로젝트</h2>
+        <p class="sec-sub" data-i18n="projects_sub">문제 · 내 역할 · 결과 중심으로 정리했습니다.</p>
+        <div class="filters" id="filters" role="group" aria-label="분류"></div>
+        <div class="projects" id="project-list"></div>
+      </section>
+
+      <section id="skills" aria-labelledby="skills-h">
+        <h2 class="sec-title" id="skills-h" data-i18n="nav_skills">기술</h2>
+        <div class="skills" id="skill-list"></div>
+      </section>
+
+      <section id="timeline" aria-labelledby="timeline-h">
+        <h2 class="sec-title" id="timeline-h" data-i18n="nav_timeline">이력</h2>
+        <ol class="timeline" id="timeline-list"></ol>
+      </section>
+
+      <section id="contact" aria-labelledby="contact-h">
+        <h2 class="sec-title" id="contact-h" data-i18n="nav_contact">연락</h2>
+        <div class="contact-box">
+          <p data-i18n="contact_text">채용 · 연구 · 협업 제안은 이메일로 편하게 연락 주세요.</p>
+          <div class="cta" id="contact-cta"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">© <span id="year"></span> <span id="foot-name"></span> · <span data-i18n="footer">GitHub Pages 로 호스팅</span></div>
+  </footer>
+
+  <noscript><p style="padding:20px">이 사이트는 JavaScript 로 내용을 표시합니다. / Please enable JavaScript.</p></noscript>
+  <script src="content.js"></script>
+  <script src="assets/demo.js"></script>
+  <script src="assets/main.js"></script>
+</body>
+</html>
