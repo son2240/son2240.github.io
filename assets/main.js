@@ -42,6 +42,42 @@
     (kids || []).forEach(function (k) { if (k) n.appendChild(typeof k === "string" ? document.createTextNode(k) : k); });
     return n;
   }
+  // Rich text: content strings may carry a few inline tags (bold, italic, styled spans)
+  // written by the site editor. Only this allow-list survives; everything else becomes text.
+  var RICH_TAGS = { B: 1, STRONG: 1, I: 1, EM: 1, U: 1, BR: 1, SPAN: 1, SMALL: 1, MARK: 1, A: 1 };
+  var RICH_CSS = /^(font-size|font-family|font-weight|font-style|color|background-color|text-decoration|letter-spacing)$/;
+  function safe(html) {
+    var tpl = document.createElement("template");
+    tpl.innerHTML = html;
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (c) {
+        if (c.nodeType === 3) return;
+        if (c.nodeType !== 1 || !RICH_TAGS[c.tagName]) { node.replaceChild(document.createTextNode(c.textContent), c); return; }
+        Array.prototype.slice.call(c.attributes).forEach(function (a) {
+          if (a.name === "style") {
+            var keep = a.value.split(";").filter(function (d) {
+              var k = d.split(":")[0].trim().toLowerCase();
+              return RICH_CSS.test(k) && !/url\(|expression/i.test(d);
+            }).join(";");
+            if (keep) c.setAttribute("style", keep); else c.removeAttribute("style");
+          } else if (!(c.tagName === "A" && a.name === "href" && /^(https?:|mailto:)/i.test(a.value))) {
+            c.removeAttribute(a.name);
+          }
+        });
+        walk(c);
+      });
+    })(tpl.content);
+    return tpl.content;
+  }
+  // bind(): put a content value into a node and mark where it came from (data-se-path),
+  // so the visual editor can write in-place edits back to content.js.
+  function bind(n, v, path) {
+    var s = t(v);
+    if (/<[a-z]/i.test(s)) { clear(n); n.appendChild(safe(s)); } else n.textContent = s;
+    if (path) n.setAttribute("data-se-path", path);
+    return n;
+  }
+  function item(n, list, i) { n.setAttribute("data-se-list", list); n.setAttribute("data-se-index", String(i)); return n; }
   function $(id) { return document.getElementById(id); }
   function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); return n; }
   function show(id, on) { $(id).hidden = !on; var a = document.querySelector('.nav a[href="#' + id + '"]'); if (a) a.hidden = !on; }
@@ -56,9 +92,12 @@
     var p = S.profile || {};
     $("brand").textContent = t(p.name) || "son2240";
     $("foot-name").textContent = t(p.name);
-    $("eyebrow").textContent = t(p.eyebrow);
-    $("headline").textContent = t(p.headline);
-    $("lead").textContent = t(p.lead);
+    var av = $("avatar");
+    if (p.photo && p.photo.src) { av.src = p.photo.src; av.alt = t(p.photo.alt) || t(p.name); av.hidden = false; }
+    else av.hidden = true;
+    bind($("eyebrow"), p.eyebrow, "profile.eyebrow");
+    bind($("headline"), p.headline, "profile.headline");
+    bind($("lead"), p.lead, "profile.lead");
     document.title = (t(p.name) ? t(p.name) + " · " : "") + "Portfolio";
 
     var cta = clear($("cta"));
@@ -68,18 +107,19 @@
     if (p.cv) cta.appendChild(link(p.cv, UI[lang].cv));
 
     var hl = clear($("highlights"));
-    (S.highlights || []).forEach(function (h) {
-      hl.appendChild(el("div", { class: "hl" }, [el("div", { class: "num", text: h.num }), el("div", { class: "lbl", text: t(h.label) })]));
+    (S.highlights || []).forEach(function (h, i) {
+      hl.appendChild(item(el("div", { class: "hl" }, [bind(el("div", { class: "num" }), h.num, "highlights." + i + ".num"),
+        bind(el("div", { class: "lbl" }), h.label, "highlights." + i + ".label")]), "highlights", i));
     });
     hl.hidden = !(S.highlights || []).length;
   }
 
   function renderAbout() {
     var a = S.about || {}, box = clear($("about-text")), facts = clear($("facts"));
-    (a.paragraphs || []).forEach(function (p) { box.appendChild(el("p", { text: t(p) })); });
-    (a.facts || []).forEach(function (f) {
-      var v = f.href ? link(f.href, t(f.v), "") : el("span", { text: t(f.v) });
-      facts.appendChild(el("li", null, [el("span", { class: "k", text: t(f.k) }), v]));
+    (a.paragraphs || []).forEach(function (p, i) { box.appendChild(item(bind(el("p"), p, "about.paragraphs." + i), "about.paragraphs", i)); });
+    (a.facts || []).forEach(function (f, i) {
+      var v = f.href ? link(f.href, t(f.v), "") : bind(el("span"), f.v, "about.facts." + i + ".v");
+      facts.appendChild(item(el("li", null, [bind(el("span", { class: "k" }), f.k, "about.facts." + i + ".k"), v]), "about.facts", i));
     });
     show("about", (a.paragraphs || []).length || (a.facts || []).length);
   }
@@ -103,24 +143,35 @@
 
     var box = clear($("project-list"));
     list.filter(function (p) { return filter === "all" || t(p.kind) === filter; }).forEach(function (p) {
-      var card = el("article", { class: "card" + (p.featured ? " featured" : "") });
-      card.appendChild(el("div", { class: "card-top" }, [el("span", { class: "kind", text: t(p.kind) }), el("span", { class: "period", text: p.period || "" })]));
-      card.appendChild(el("h3", { text: t(p.title) }));
-      if (p.summary) card.appendChild(el("p", { class: "summary", text: t(p.summary) }));
+      var i = list.indexOf(p), P = "projects." + i + ".";
+      var card = item(el("article", { class: "card" + (p.featured ? " featured" : "") }), "projects", i);
+      if (p.image && p.image.src) {
+        card.appendChild(el("img", { class: "card-img", src: p.image.src, alt: t(p.image.alt), loading: "lazy" }));
+      }
+      card.appendChild(el("div", { class: "card-top" }, [bind(el("span", { class: "kind" }), p.kind, P + "kind"),
+        bind(el("span", { class: "period" }), p.period || "", P + "period")]));
+      card.appendChild(bind(el("h3"), p.title, P + "title"));
+      if (p.summary) card.appendChild(bind(el("p", { class: "summary" }), p.summary, P + "summary"));
 
       var dl = el("dl");
       [["problem", p.problem], ["role", p.role]].forEach(function (row) {
         if (!row[1]) return;
         var dd = el("dd");
-        if (Array.isArray(row[1])) { var ul = el("ul"); row[1].forEach(function (x) { ul.appendChild(el("li", { text: t(x) })); }); dd.appendChild(ul); }
-        else dd.textContent = t(row[1]);
+        if (Array.isArray(row[1])) {
+          var ul = el("ul");
+          row[1].forEach(function (x, j) { ul.appendChild(item(bind(el("li"), x, P + row[0] + "." + j), P + row[0], j)); });
+          dd.appendChild(ul);
+        } else bind(dd, row[1], P + row[0]);
         dl.appendChild(el("dt", { text: UI[lang][row[0]] })); dl.appendChild(dd);
       });
       if (dl.childNodes.length) card.appendChild(dl);
 
       if ((p.metrics || []).length) {
         var m = el("div", { class: "metrics", "aria-label": UI[lang].result });
-        p.metrics.forEach(function (x) { m.appendChild(el("div", { class: "metric" }, [el("b", { text: x.value }), el("span", { text: t(x.label) })])); });
+        p.metrics.forEach(function (x, j) {
+          m.appendChild(item(el("div", { class: "metric" }, [bind(el("b"), x.value, P + "metrics." + j + ".value"),
+            bind(el("span"), x.label, P + "metrics." + j + ".label")]), P + "metrics", j));
+        });
         card.appendChild(m);
       }
       if ((p.links || []).length) {
@@ -130,7 +181,7 @@
       }
       if ((p.tags || []).length) {
         var tg = el("div", { class: "tags" });
-        p.tags.forEach(function (x) { tg.appendChild(el("span", { class: "tag", text: x })); });
+        p.tags.forEach(function (x, j) { tg.appendChild(item(bind(el("span", { class: "tag" }), x, P + "tags." + j), P + "tags", j)); });
         card.appendChild(tg);
       }
       box.appendChild(card);
@@ -139,22 +190,22 @@
 
   function renderSkills() {
     var list = S.skills || [], box = clear($("skill-list"));
-    list.forEach(function (s) {
+    list.forEach(function (s, i) {
       var tg = el("div", { class: "tags" });
-      (s.items || []).forEach(function (x) { tg.appendChild(el("span", { class: "tag", text: x })); });
-      box.appendChild(el("div", { class: "skill" }, [el("h3", { text: t(s.group) }), tg]));
+      (s.items || []).forEach(function (x, j) { tg.appendChild(item(bind(el("span", { class: "tag" }), x, "skills." + i + ".items." + j), "skills." + i + ".items", j)); });
+      box.appendChild(item(el("div", { class: "skill" }, [bind(el("h3"), s.group, "skills." + i + ".group"), tg]), "skills", i));
     });
     show("skills", list.length);
   }
 
   function renderTimeline() {
     var list = S.timeline || [], box = clear($("timeline-list"));
-    list.forEach(function (x) {
-      box.appendChild(el("li", null, [
-        el("div", { class: "when", text: x.when || "" }),
-        el("div", { class: "what", text: t(x.what) }),
-        x.desc ? el("div", { class: "desc", text: t(x.desc) }) : null
-      ]));
+    list.forEach(function (x, i) {
+      box.appendChild(item(el("li", null, [
+        bind(el("div", { class: "when" }), x.when || "", "timeline." + i + ".when"),
+        bind(el("div", { class: "what" }), x.what, "timeline." + i + ".what"),
+        x.desc ? bind(el("div", { class: "desc" }), x.desc, "timeline." + i + ".desc") : null
+      ]), "timeline", i));
     });
     show("timeline", list.length);
   }
